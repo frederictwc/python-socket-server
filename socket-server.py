@@ -50,6 +50,7 @@ while True:
                     writer = csv.writer(writeFile)
                     writer.writerow(row)
                 writeFile.close()
+                connection.sendall(data)
             else:
                 # no more data -- quit the loop
                 print("no more data.")
