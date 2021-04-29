@@ -1,8 +1,10 @@
 # load additional Python module
 import socket
 import csv
-import event_pb2
+from utils import USV
+import time
 
+usv=USV()
 PORT = 23456
 FILE_PATH = "events.csv"
 
@@ -22,39 +24,46 @@ ip_address = socket.gethostbyname(local_hostname)
 print ("working on %s (%s) with %s" % (local_hostname, local_fqdn, ip_address))
 
 # bind the socket to the port 23456
-server_address = (ip_address, PORT)  
+server_address = (ip_address, PORT)
 print('starting up on %s port %s' % server_address)
 sock.bind(server_address)
 
 # listen for incoming connections (server mode) with one connection at a time
 sock.listen(1)
 
-while True:  
+while True:
     # wait for a connection
     print('waiting for a connection')
-    connection, client_address = sock.accept()
+    conn, client_address = sock.accept()
     try:
         # show who connected to us
         print('connection from', client_address)
         # receive the data in small chunks and print it
         while True:
-            data = connection.recv(1024)
-            if data:
-                # output received data
-                print("Data: %s" % data)
-                event = event_pb2.EventProto()
-                event.ParseFromString(data)
-                print("Parsed event %s" % event)
-                row = [event.timestamp, event.userId, event.event]
-                with open(FILE_PATH, 'a') as writeFile:
-                    writer = csv.writer(writeFile)
-                    writer.writerow(row)
-                writeFile.close()
-                connection.sendall(data)
-            else:
-                # no more data -- quit the loop
-                print("no more data.")
-                break
+            data = conn.recv(1024)
+            r,s=usv.Protocol_UnPack(data);
+
+            if(len(r)>=2 and r[0]==1 and r[1]==0x17):
+                data=[1,0x18]
+                if(r[2]==1):
+                    i=5;
+                    data+=[0]+[r[3]]+[r[4]]
+                else:
+                    i=3
+                    data+=[0]
+                data+=r[i:]
+                buffer=bytearray(usv.Protocol_Pack(data))
+                print("knlnjnknknknkn",[hex(no) for no in data])
+                conn.sendall(buffer)
+
+            ri=randint(0,60);
+            if (time.time()%60==ri):
+                data=[]???
+                buffer=bytearray(usv.Protocol_Pack(data))
+                sendall(buffer)
+
+
+
     finally:
         # Clean up the connection
-        connection.close()
+        conn.close()
